@@ -28,16 +28,17 @@
             </form>
             <?php
             $search = $_GET['search'];
-            $itemsQuery = !isset($search) ? "SELECT *
-                                     FROM items" :
-                "SELECT *
-                                     FROM items
-                                     WHERE name LIKE '%" . $search . "%'";
-
             $db = new SQLite3('lab_securing.db');
-            $items = $db->query($itemsQuery);
-            echo 'Your filter is: ' . $search;
-
+            if (!isset($search)) {
+                $itemsQuery = "SELECT * FROM items";
+                $stmt = $db->prepare($itemsQuery);
+            } else {
+                $itemsQuery = "SELECT * FROM items WHERE name LIKE :search";
+                $stmt = $db->prepare($itemsQuery);
+                $stmt->bindValue(':search', '%' . $search . '%', SQLITE3_TEXT);
+            }
+            $items = $stmt->execute();
+            echo 'Your filter is: ' . htmlspecialchars($search, ENT_QUOTES, 'UTF-8');
             ?>
             <table class="table table-bordered">
                 <thead>
